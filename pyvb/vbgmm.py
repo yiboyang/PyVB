@@ -1,9 +1,9 @@
-﻿import numpy as np
-from scipy.cluster import vq
-from .util import log_like_Gauss2
-from .sampling import testData
+﻿from scipy.cluster import vq
+
 from .emgmm import EMGMM
 from .moments import *
+from .util import log_like_Gauss2
+
 
 class VBGMM(EMGMM):
     """
@@ -11,22 +11,22 @@ class VBGMM(EMGMM):
     This class is mostly based on the EMGMM class.
 
     Attributes
-      _nstates [int] : number of hidden states, nmix
-      _u0 [ndarray, shape (nmix) : prior parameter for mixing coefficients
+      _K [int] : number of hidden states, K
+      _u0 [ndarray, shape (K) : prior parameter for mixing coefficients
       _nu0 [float] : dof prior parameter for precision matrix
       _V0 [ndarray, shape (dim,dim)] : scale matrix prior parameter
         for precision matrix
       _beta0 [float] : dof prior parameter for mean vector
       _m0 [ndarray, shape (dim)] : prior for mean vector
-      _u [ndarray, shape (nmix) : posterior parameters for mixing coefficients
-      _nu [ndarray, shape (nmix)] : dof posterior parameter for precision matrix
-      _V [ndarray, shape (nmix,dim,dim)] : scale matrix posterior parameter
+      _u [ndarray, shape (K) : posterior parameters for mixing coefficients
+      _nu [ndarray, shape (K)] : dof posterior parameter for precision matrix
+      _V [ndarray, shape (K,dim,dim)] : scale matrix posterior parameter
         for precision matrices
-      _beta [ndarray, shape (nmix)] : dof posterior parameter for mean vector
-      _m [ndarray, shape (nmix,dim)] : posterior parameter for mean vector
-      pi [ndarray, shape (_nstates)] : expected mixing coefficients
-      mu [ndarray, shape (_nstates, dim)] : expected mean vectors
-      cv [ndarray, shape (_nstates, dim, dim)] : expected covariance matrix
+      _beta [ndarray, shape (K)] : dof posterior parameter for mean vector
+      _m [ndarray, shape (K,dim)] : posterior parameter for mean vector
+      pi [ndarray, shape (_K)] : expected mixing coefficients
+      mu [ndarray, shape (_K, dim)] : expected mean vectors
+      cv [ndarray, shape (_K, dim, dim)] : expected covariance matrix
     Methods
       getExpectations : calculate expectation of parameters i.e. pi,mu and cv
       showModel : show model parameters
@@ -41,11 +41,11 @@ class VBGMM(EMGMM):
       makeTransMat : make transition matrix by regarding the data as time series
     """
 
-    def __init__(self,nmix=10,u0=0.5,m0=0.0,beta0=1,nu0=1,V0=10.0):
+    def __init__(self, K=10, u0=0.5, m0=0.0, beta0=1, nu0=1, V0=10.0):
         # maximum number of the hidden clusters
-        self._nstates = nmix
+        self.K = K
         # hyper parameter for Dirichlet prior mixing coefficients
-        self._u0 = np.ones(nmix) * u0
+        self._u0 = np.ones(K) * u0
         # hyper parameters for prior precision matrix
         self._nu0 = nu0
         self._V0 = V0
@@ -53,15 +53,15 @@ class VBGMM(EMGMM):
         self._beta0 = beta0
         self._m0 = m0
 
-    def _init_prior(self,obs,adjust_prior=True):
+    def _init_prior(self, obs, adjust_prior=True):
         """
         Initialize prior parameters
         """
-        nobs, ndim = obs.shape
+        N, D = obs.shape
 
-        # assure nu0 >= ndim + 1
-        if self._nu0 < ndim + 1:
-            self._nu0 += ndim + 1
+        # assure nu0 >= D + 1
+        if self._nu0 < D + 1:
+            self._nu0 += D + 1
 
         if adjust_prior:
             # adjust prior with observed data
@@ -69,24 +69,24 @@ class VBGMM(EMGMM):
             self._V0 = np.atleast_2d(np.cov(obs.T)) * self._V0
         else:
             # use simple prior
-            self._m0 = np.zeros(ndim)
-            self._V0 = np.identity(ndim) * self._V0
+            self._m0 = np.zeros(D)
+            self._V0 = np.identity(D) * self._V0
 
-    def _init_posterior(self,obs):
+    def _init_posterior(self, obs):
         """
         Initialize posterior parameters
         """
-        nmix = self._nstates
-        nobs, ndim = obs.shape
-        avr_N = float(nobs) / float(nmix)
+        K = self.K
+        N, D = obs.shape
+        avr_N = float(N) / float(K)
         # parameters of posterior mixing coefficients
-        self._u = np.ones(nmix) * (self._u0 + avr_N)
+        self._u = np.ones(K) * (self._u0 + avr_N)
         # parameters of posterior precision matrices
-        self._nu = np.ones(nmix) * (self._nu0 + avr_N)
-        self._V = np.tile(np.array(self._V0),(nmix,1,1))
+        self._nu = np.ones(K) * (self._nu0 + avr_N)
+        self._V = np.tile(np.array(self._V0), (K, 1, 1))
         # parameters of posterior mean vectors
-        self._beta = np.ones(nmix) * (self._beta0 + avr_N)
-        self._m, temp = vq.kmeans2(obs,nmix) # initialize by K-Means
+        self._beta = np.ones(K) * (self._beta0 + avr_N)
+        self._m, temp = vq.kmeans2(obs, K)  # initialize by K-Means
 
     def getExpectations(self):
         """
@@ -99,11 +99,11 @@ class VBGMM(EMGMM):
         self.mu = np.array(self._m)
 
         # inv(<W_k>_Q(W_k))
-        self.cv = self._V / self._nu[:,np.newaxis,np.newaxis]
+        self.cv = self._V / self._nu[:, np.newaxis, np.newaxis]
 
         return self.pi, self.mu, self.cv
 
-    def showModel(self,show_mu=False,show_cv=False,min_pi=0.01):
+    def showModel(self, show_mu=False, show_cv=False, min_pi=0.01):
         """
         Obtain model parameters for relavent clusters
         """
@@ -112,33 +112,33 @@ class VBGMM(EMGMM):
         _ = self.getExpectations()
 
         # then return posterior parameters
-        return EMGMM.showModel(self,show_mu,show_cv,min_pi)
+        return EMGMM.showModel(self, show_mu, show_cv, min_pi)
 
-    def score(self,obs):
+    def score(self, obs):
         """
         score the model
         input
-          obs [ndarray, shape(nobs,ndim)] : observed data
+          obs [ndarray, shape(N,D)] : observed data
         output
           F [float] : variational free energy of the model
         """
-        z,lnP = self.eval_hidden_states(obs)
+        z, lnP = self.eval_hidden_states(obs)
         F = -lnP + self._KL_div()
         return F
 
-    def _log_like_f(self,obs):
+    def _log_like_f(self, obs):
         """
         mean log-likelihood function of of complete data over posterior
             of parameters, <lnP(X,Z|theta)>_Q(theta)
         input
-          obs [ndarray, shape (nobs,ndim)] : observed data
+          obs [ndarray, shape (N,D)] : observed data
         output
-          lnf [ndarray, shape (nobs, nmix)] : log-likelihood
+          lnf [ndarray, shape (N, K)] : log-likelihood
             where lnf[n,k] = <lnP(X_n,Z_n=k|theta_k)>_Q(theta_k)
         """
 
-        lnf = E_lnpi_Dirichlet(self._u)[np.newaxis,:] \
-            + log_like_Gauss2(obs,self._nu,self._V,self._beta,self._m)
+        lnf = E_lnpi_Dirichlet(self._u)[np.newaxis, :] \
+              + log_like_Gauss2(obs, self._nu, self._V, self._beta, self._m)
         return lnf
 
     def _KL_div(self):
@@ -147,19 +147,19 @@ class VBGMM(EMGMM):
         output
           KL [float] : KL-div
         """
-        nmix = self._nstates
+        K = self.K
 
         # first calculate KL-div of mixing coefficients
-        KL = KL_Dirichlet(self._u,self._u0)
+        KL = KL_Dirichlet(self._u, self._u0)
 
         # then calculate KL-div of mean vectors and precision matrices
-        for k in range(nmix):
-            KL += KL_GaussWishart(self._nu[k],self._V[k],self._beta[k],\
-                self._m[k],self._nu0,self._V0,self._beta0,self._m0)
+        for k in range(K):
+            KL += KL_GaussWishart(self._nu[k], self._V[k], self._beta[k], \
+                                  self._m[k], self._nu0, self._V0, self._beta0, self._m0)
 
         return KL
 
-    def _E_step(self,obs):
+    def _E_step(self, obs):
         """
         VB-E step
         Calculate variational posterior distribution of hidden states Q(Z)
@@ -168,7 +168,7 @@ class VBGMM(EMGMM):
         """
 
         # calculate Q(Z)
-        lnP = EMGMM._E_step(self,obs)
+        lnP = EMGMM._E_step(self, obs)
 
         # calculate lower-bound
         KL = self._KL_div()
@@ -176,13 +176,13 @@ class VBGMM(EMGMM):
 
         return L
 
-    def _update_parameters(self,min_cv=None):
+    def _update_parameters(self, min_cv=None):
         """
         Update parameters of variational posterior distribution by precomputed
             sufficient statistics
         """
 
-        nmix = self._nstates
+        K = self.K
         # parameter for mixing coefficients
         self._u = self._u0 + self._N
 
@@ -191,9 +191,9 @@ class VBGMM(EMGMM):
         self._nu = self._nu0 + self._N
         self._beta = self._beta0 + self._N
         # vector or matrix parameters of Gauss-Wishart
-        for k in range(nmix):
-            self._m[k] = (self._beta0 * self._m0  \
-                + self._N[k] * self._xbar[k]) / self._beta[k]
+        for k in range(K):
+            self._m[k] = (self._beta0 * self._m0 \
+                          + self._N[k] * self._xbar[k]) / self._beta[k]
             dx = self._xbar[k] - self._m0
             self._V[k] = self._V0 + self._C[k] \
-                + (self._N[k] * self._beta0 / self._beta[k]) * np.outer(dx,dx)
+                         + (self._N[k] * self._beta0 / self._beta[k]) * np.outer(dx, dx)
