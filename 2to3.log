@@ -1,0 +1,1177 @@
+--- PyVB/test.py	(original)
++++ PyVB/test.py	(refactored)
+@@ -8,7 +8,7 @@
+     model = EMGMM(N)
+     model.fit(X)
+     model.showModel()
+-    print model.score(X)
++    print(model.score(X))
+ 
+ def test_VBGMM(N=5,**keywards):
+     from pyvb.vbgmm import VBGMM
+@@ -103,10 +103,10 @@
+     V2 = np.identity(2) * 3.0
+     beta1 = 3
+     beta2 = 4
+-    print E_lnpi_Dirichlet(alpha1)
+-    print KL_Dirichlet(alpha1,alpha2)
+-    print E_lndetW_Wishart(nu1,V1)
+-    print KL_GaussWishart(nu1,V1,beta1,m1,nu2,V2,beta2,m2)
++    print(E_lnpi_Dirichlet(alpha1))
++    print(KL_Dirichlet(alpha1,alpha2))
++    print(E_lndetW_Wishart(nu1,V1))
++    print(KL_GaussWishart(nu1,V1,beta1,m1,nu2,V2,beta2,m2))
+ 
+ tests = {"EMGMM":test_EMGMM,"VBGMM":test_VBGMM,"DPGMM":test_DPGMM,\
+     "HMM":test_HMM,"VBHMM":test_VBHMM,"MEHMM":test_MEHMM,"moments":test_moments}
+--- PyVB/pyvb/__init__.py	(original)
++++ PyVB/pyvb/__init__.py	(refactored)
+@@ -1,4 +1,4 @@
+ __version__ = "1.5"
+-from core import *
+-from vbgmm import VBGMM
+-import hmm, vbhmm
++from .core import *
++from .vbgmm import VBGMM
++from . import hmm, vbhmm
+--- PyVB/pyvb/core.py	(original)
++++ PyVB/pyvb/core.py	(refactored)
+@@ -1,3 +1,3 @@
+-from moments import *
+-from util import *
+-from sampling import *
++from .moments import *
++from .util import *
++from .sampling import *
+--- PyVB/pyvb/dpgmm.py	(original)
++++ PyVB/pyvb/dpgmm.py	(refactored)
+@@ -79,7 +79,7 @@
+         KL = KL_StickBrake(self._tau,self._tau0)
+ 
+         # then calculate KL-div of mean vectors and precision matrices
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             KL += KL_GaussWishart(self._nu[k],self._V[k],self._beta[k],\
+                 self._m[k],self._nu0,self._V0,self._beta0,self._m0)
+         return KL
+@@ -100,7 +100,7 @@
+         self._nu = self._nu0 + self._N
+         self._beta = self._beta0 + self._N
+         # vector or matrix parameters of Gauss-Wishart
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             self._m[k] = (self._beta0 * self._m0  \
+                 + self._N[k] * self._xbar[k]) / self._beta[k]
+             dx = self._xbar[k] - self._m0
+--- PyVB/pyvb/emgmm.py	(original)
++++ PyVB/pyvb/emgmm.py	(refactored)
+@@ -76,22 +76,22 @@
+         nmix = self._nstates
+ 
+         # make a tuple of properties and sort its member by mixing coefficients
+-        params = sorted(zip(self.pi,range(nmix),self.mu,self.cv),\
++        params = sorted(zip(self.pi,list(range(nmix)),self.mu,self.cv),\
+             key=lambda x:x[0],reverse=True)
+ 
+         relavent_clusters = []
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             # exclude clusters whose pi < min_pi
+             if params[k][0] < min_pi:
+                 break
+ 
+             relavent_clusters.append(params[k])
+-            print "\n%dth component, pi = %8.3g" % (k,params[k][0])
+-            print "cluster id =", params[k][1]
++            print("\n%dth component, pi = %8.3g" % (k,params[k][0]))
++            print("cluster id =", params[k][1])
+             if show_mu:
+-                print "mu =",params[k][2]
++                print("mu =",params[k][2])
+             if show_cv:
+-                print "cv =",params[k][3]
++                print("cv =",params[k][3])
+ 
+         return relavent_clusters
+ 
+@@ -168,7 +168,7 @@
+         F = 1.0e50
+ 
+         # main loop
+-        for i in xrange(niter):
++        for i in range(niter):
+ 
+             # performe E step and set new free energy
+             F_new = - self._E_step(obs)
+@@ -178,18 +178,18 @@
+ 
+             # check convergence
+             if abs(dF) < eps :
+-                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" \
+-                %(i,F_new,dF)
+-                print "%12.6e < %12.6e Converged" %(dF, eps)
++                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" \
++                %(i,F_new,dF))
++                print("%12.6e < %12.6e Converged" %(dF, eps))
+                 break
+ 
+             # print iteration info
+             if i % ifreq == 0 and dF < 0.0:
+-                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" \
+-                %(i,F_new,dF)
++                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" \
++                %(i,F_new,dF))
+             elif dF > 0.0:
+-                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
+-              %(i,F_new,dF)
++                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
++              %(i,F_new,dF))
+ 
+             # update free energy
+             F = F_new
+@@ -235,7 +235,7 @@
+         # posterior average of x
+         self._xbar = np.dot(self.z.T,obs) / self._N[:,np.newaxis]
+         # posterior unnormalized sample covariance matrices
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             dobs = obs - self._xbar[k]
+             self._C[k] = np.dot((self.z[:,k] * dobs.T), dobs)
+ 
+@@ -289,7 +289,7 @@
+         try :
+             import matplotlib.pyplot as plt
+         except ImportError :
+-            print "cannot import pyplot"
++            print("cannot import pyplot")
+             return
+         # plot data
+         for k,pos in enumerate(clust_pos):
+@@ -313,7 +313,7 @@
+         try :
+             import matplotlib.pyplot as plt
+         except ImportError :
+-            print "cannot import pyplot"
++            print("cannot import pyplot")
+             return
+         for k,pos in enumerate(clust_pos):
+             symb = symbs[k / 7]
+@@ -342,11 +342,11 @@
+         MT = np.zeros((dim,dim))
+ 
+         # main loop
+-        for t in xrange(1,len(z)-1):
++        for t in range(1,len(z)-1):
+             MT += np.outer(z[t-1],z[t])
+ 
+-        for i in xrange(len(MT)):
+-            for j in xrange(len(MT)):
++        for i in range(len(MT)):
++            for j in range(len(MT)):
+                 if MT[i,j] < min_degree:
+                     MT[i,j] = 0.0
+ 
+--- PyVB/pyvb/hmm.py	(original)
++++ PyVB/pyvb/hmm.py	(refactored)
+@@ -10,7 +10,7 @@
+     from . import _hmmc
+     extC_imported = True
+ except ImportError:
+-    print "C extension module was not imported"
++    print("C extension module was not imported")
+     extC_imported = False
+ 
+ # import Fortran95 extension module
+@@ -18,7 +18,7 @@
+     from . import _hmmf
+     extF_imported = True
+ except ImportError:
+-    print "Fortran extension module was not imported"
++    print("Fortran extension module was not imported")
+     extF_imported = False
+ 
+ if extF_imported :
+@@ -27,8 +27,8 @@
+     default_ext = "C"
+ else :
+     default_ext = None
+-    print "No extension module was not imported"
+-    print "Forward-Backward step will be significantly slow"
++    print("No extension module was not imported")
++    print("Forward-Backward step will be significantly slow")
+ 
+ 
+ class _BaseHMM():
+@@ -87,7 +87,7 @@
+             lnalpha = _hmmf.forward_f(self._lnpi,self._lnA,lnf)
+         else :
+             lnalpha[0,:] = self._lnpi + lnf[0,:]
+-            for t in xrange(1,T):
++            for t in range(1,T):
+                 lnalpha[t,:] = logsum(lnalpha[t-1,:] + self._lnA.T,1) \
+                     + lnf[t,:]
+         return lnalpha,logsum(lnalpha[-1,:])
+@@ -111,7 +111,7 @@
+             lnbeta = _hmmf.backward_f(self._lnpi,self._lnA,lnf)
+         else :
+             lnbeta[T-1,:] = 0.0
+-            for t in xrange(T-2,-1,-1):
++            for t in range(T-2,-1,-1):
+                 lnbeta[t,:] = logsum(self._lnA + lnf[t+1,:] + lnbeta[t+1,:],1)
+         return lnbeta,logsum(lnbeta[0,:] + lnf[0,:] + self._lnpi)
+ 
+@@ -186,9 +186,9 @@
+         pi = self.pi[ids]
+         A = np.array([AA[ids] for AA in self.A[ids]])
+         if show_pi :
+-            print "pi = ", pi
++            print("pi = ", pi)
+         if show_A :
+-            print "A = ", A
++            print("A = ", A)
+         return ids,pi,A
+ 
+     def fit(self,obs,niter=1000,eps=1.0e-4,ifreq=10,init=True,\
+@@ -206,7 +206,7 @@
+         lnalpha, lnbeta, lneta = self._allocate_temp(obs)
+ 
+         # main loop
+-        for i in xrange(niter):
++        for i in range(niter):
+             # E step
+             lnf = self._log_like_f(obs)
+             lneta, lngamma, lnP = \
+@@ -215,14 +215,14 @@
+             F = -lnP
+             dF = F - old_F
+             if(abs(dF) < eps):
+-                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e"\
+-                     %(i,F,dF)
+-                print "%12.6e < %12.6e Converged" %(dF, eps)
++                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e"\
++                     %(i,F,dF))
++                print("%12.6e < %12.6e Converged" %(dF, eps))
+                 break
+             if i % ifreq == 0 and dF < 0.0:
+-                print "%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF)
++                print("%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF))
+             elif dF > 0.0:
+-                print "%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF)
++                print("%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF))
+             old_F = F
+             # M step
+             self._M_step(obs,lneta,lngamma)
+@@ -248,7 +248,7 @@
+         # i.e. obss[i] = obs[pos_ids[i][0]:pos_ids[i][1]]
+         pos_ids = []
+         j = 0
+-        for i in xrange(nobss):
++        for i in range(nobss):
+             pos_ids.append((j,j+nobs[i]))
+             j += nobs[i]
+ 
+@@ -259,15 +259,15 @@
+         # allocate space for forward-backward
+         lneta = []
+         lngamma = []
+-        for nn in xrange(nobss):
++        for nn in range(nobss):
+             lneta.append(np.zeros((len(obss[nn])-1,nmix,nmix)))
+             lngamma.append(np.zeros((len(obss[nn]),nmix)))
+         lnalpha, lnbeta, lneta_temp = self._allocate_temp(obss[i_max_obs])
+ 
+-        for i in xrange(niter):
++        for i in range(niter):
+             lnP = 0.0
+             lnf = self._log_like_f(obs_flatten)
+-            for nn in xrange(nobss):
++            for nn in range(nobss):
+                 Ti,Tf = pos_ids[nn]
+                 e, g, p = self._E_step(lnf[Ti:Tf],lnalpha[:nobs[nn]],\
+                     lnbeta[:nobs[nn]],lneta_temp[:nobs[nn]-1],use_ext)
+@@ -278,13 +278,13 @@
+             F = -lnP
+             dF = F - old_F
+             if(abs(dF) < eps):
+-                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF)
+-                print "%12.6e < %12.6e Converged" %(dF, eps)
++                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF))
++                print("%12.6e < %12.6e Converged" %(dF, eps))
+                 break
+             if i % ifreq == 0 and dF < 0.0:
+-                print "%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF)
++                print("%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF))
+             elif dF > 0.0:
+-                print "%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF)
++                print("%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF))
+             old_F = F
+             self._M_step(obs_flatten,lneta,lngamma,multi=True)
+         
+@@ -303,7 +303,7 @@
+         # check if forward and backward were done correctly
+         dlnP = lnP_f-lnP_b
+         if abs(dlnP) > 1.0e-6:
+-            print "warning forward and backward are not equivalent"
++            print("warning forward and backward are not equivalent")
+ 
+         # compute lneta for updating transition matrix
+         if use_ext in ("c","C") and extC_imported :
+@@ -312,9 +312,9 @@
+         elif use_ext in ("f","F") and extF_imported :
+             lneta = _hmmf.compute_lneta_f(lnalpha,self._lnA,lnbeta,lnf,lnP_f)
+         else:
+-            for i in xrange(self._nstates):
+-                for j in xrange(self._nstates):
+-                    for t in xrange(T-1):
++            for i in range(self._nstates):
++                for j in range(self._nstates):
++                    for t in range(T-1):
+                         lneta[t,i,j] = lnalpha[t,i] + self._lnA[i,j,] + \
+                             lnf[t+1,j] + lnbeta[t+1,j]
+             lneta -= lnP_f
+@@ -378,7 +378,7 @@
+         r = random((T,2))
+         z[0] = (pi_cdf > r[0,0]).argmax()
+         o[0] = (B_cdf[z[0]] > r[0,1]).argmax()
+-        for t in xrange(1,T):
++        for t in range(1,T):
+             z[t] = (A_cdf[z[t-1]] > r[t,0]).argmax()
+             o[t] = (B_cdf[z[t]] > r[t,1]).argmax()
+ 
+@@ -386,7 +386,7 @@
+ 
+     def _update_parameters(self,obs,lneta,lngamma,multi=False):
+         lngamma_sum = _BaseHMM._update_parameters(self,obs,lneta,lngamma)
+-        for j in xrange(self._mstates):
++        for j in range(self._mstates):
+             self._lnB[:,j] = logsum(lngamma[obs==j,:],0) - lngamma_sum
+ 
+ class GaussianHMM(_BaseHMM):
+@@ -424,12 +424,12 @@
+         
+         for k in range(len(ids)):
+             i = ids[k]
+-            print "\n%dth component, pi = %8.3g" % (k,self.pi[i])
+-            print "cluster id =", i
++            print("\n%dth component, pi = %8.3g" % (k,self.pi[i]))
++            print("cluster id =", i)
+             if show_mu:
+-                print "mu =",self.mu[i]
++                print("mu =",self.mu[i])
+             if show_cv:
+-                print "cv =",self.cv[i]      
++                print("cv =",self.cv[i])      
+         return ids,pi,A,mu,cv
+ 
+     def simulate(self,T):
+@@ -441,7 +441,7 @@
+         r = random(T)
+         z[0] = (pi_cdf > r[0]).argmax()
+         o[0] = sample_gaussian(self.mu[z[0]],self.cv[z[0]])
+-        for t in xrange(1,T):
++        for t in range(1,T):
+             z[t] = (A_cdf[z[t-1]] > r[t]).argmax()
+             o[t] = sample_gaussian(self.mu[z[t]],self.cv[z[t]])
+         return z,o
+@@ -452,7 +452,7 @@
+             posteriors = np.exp(np.vstack(lngamma))
+         else:
+             posteriors = np.exp(lngamma)
+-        for k in xrange(self._nstates):
++        for k in range(self._nstates):
+             post = posteriors[:, k]
+             norm = 1.0 / post.sum()
+             self.mu[k] = np.dot(post,obs) * norm
+@@ -481,7 +481,7 @@
+         try :
+             import matplotlib.pyplot as plt
+         except ImportError :
+-            print "cannot import pyplot"
++            print("cannot import pyplot")
+             return
+         for k,pos in enumerate(clust_pos):
+             symb = symbs[k / 6]
+@@ -502,7 +502,7 @@
+         try :
+             import matplotlib.pyplot as plt
+         except ImportError :
+-            print "cannot import pyplot"
++            print("cannot import pyplot")
+             return
+         for k,pos in enumerate(clust_pos):
+             symb = symbs[k / 6]
+--- PyVB/pyvb/mehmm.py	(original)
++++ PyVB/pyvb/mehmm.py	(refactored)
+@@ -53,9 +53,9 @@
+         if init:
+             self._initialize_HMM(obs)
+             old_F = 1.0e20
+-            print set(self.z)            
+-            
+-        for i in xrange(niter):
++            print(set(self.z))            
++            
++        for i in range(niter):
+             # VB-E step
+             lnf = self._log_like_f(obs)
+             self.z, lnP = self._E_step(lnf,use_ext)
+@@ -66,13 +66,13 @@
+             dF = F - old_F
+     
+             if(abs(dF) < eps):
+-                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF)
+-                print "%12.6e < %12.6e Converged" %(dF, eps)
++                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF))
++                print("%12.6e < %12.6e Converged" %(dF, eps))
+                 break
+             if i % ifreq == 0 and dF < 0.0:
+-                print "%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF)
++                print("%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF))
+             elif dF >= 0.0:
+-                print "%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF)
++                print("%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF))
+         
+             old_F = F
+ 
+@@ -177,7 +177,7 @@
+         self._WA = self._uA.copy()
+ 
+         # extract N(z[t]=k,z[t+1]=k')
+-        for k in xrange(self._nstates):
++        for k in range(self._nstates):
+             
+             # the position of z[t+1] s.t. z[t] == k
+             mask = np.where(self.z == k)[0] + 1
+@@ -193,7 +193,7 @@
+             n_trans = np.bincount(self.z[mask])
+             self._WA[k,:len(n_trans)] += n_trans 
+                 
+-        for k in xrange(self._nstates):
++        for k in range(self._nstates):
+             self._lnA[k,:] = E_lnpi_Dirichlet(self._WA[k,:])
+         
+ #class VBMultinomialHMM(_BaseVBHMM):
+@@ -261,7 +261,7 @@
+     def _KL_div(self):
+         nmix = self._nstates
+         KL = _BaseVBHMM._KL_div(self)
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             KLg = KL_GaussWishart(self._nu[k],self._V[k],self._beta[k],\
+                 self._m[k],self._nu0,self._V0,self._beta0,self._m0)
+             KL += KLg
+@@ -275,7 +275,7 @@
+         self._N[:] = 0
+         self._N[:len(count)] = count[:]
+         
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             mask = (self.z == k)
+             
+             # ignore empty cluster 
+@@ -295,7 +295,7 @@
+         self._beta = self._beta0 + self._N
+         self._nu = self._nu0 + self._N
+         self._V = self._V0 + self._C
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             if self._N[k] == 0:
+                 self._m[k] = self._m0[:]
+                 self._V[k] = self._V0[:]
+@@ -327,12 +327,12 @@
+         cv = self.cv[ids]
+         for k in range(len(ids)):
+             i = ids[k]
+-            print "\n%dth component, pi = %8.3g" % (k,self.pi[i])
+-            print "cluster id =", i
++            print("\n%dth component, pi = %8.3g" % (k,self.pi[i]))
++            print("cluster id =", i)
+             if show_mu:
+-                print "mu =",self.mu[i]
++                print("mu =",self.mu[i])
+             if show_cv:
+-                print "cv =",self.cv[i]      
++                print("cv =",self.cv[i])      
+         return ids,pi,A,mu,cv
+ 
+     def getClustPos(self,obs,use_ext=default_ext,multi=False,eps=1.0e-2):
+@@ -357,7 +357,7 @@
+         try :
+             import matplotlib.pyplot as plt
+         except ImportError :
+-            print "cannot import pyplot"
++            print("cannot import pyplot")
+             return
+         for k,pos in enumerate(clust_pos):
+             symb = symbs[k / 6]
+@@ -378,7 +378,7 @@
+         try :
+             import matplotlib.pyplot as plt
+         except ImportError :
+-            print "cannot import pyplot"
++            print("cannot import pyplot")
+             return
+         for k,pos in enumerate(clust_pos):
+             symb = symbs[k / 6]
+--- PyVB/pyvb/moments.py	(original)
++++ PyVB/pyvb/moments.py	(refactored)
+@@ -30,13 +30,13 @@
+     """
+ 
+     if len(alpha1) != len(alpha2) :
+-        raise ValueError, "dimension of alpha1 and alpha2 dont match"
++        raise ValueError("dimension of alpha1 and alpha2 dont match")
+ 
+     KL = - lnZ_Dirichlet(alpha1) + lnZ_Dirichlet(alpha2) \
+         + np.dot((alpha1 - alpha2),(digamma(alpha1) - digamma(alpha1.sum())))
+ 
+     if KL < _small_negative_number :
+-        raise ValueError, "KL must be larger than 0"
++        raise ValueError("KL must be larger than 0")
+ 
+     return KL
+ 
+@@ -49,7 +49,7 @@
+       note <CovMat> = V/nu
+     """
+     if nu < len(V) + 1:
+-        raise ValueError, "dof parameter nu must larger than len(V)"
++        raise ValueError("dof parameter nu must larger than len(V)")
+ 
+     D = len(V)
+     lnZ = 0.5 * nu * (D * np.log(2.0) - np.log(det(V))) \
+@@ -65,7 +65,7 @@
+       V [ndarray, shape (D x D)] : base matrix of Wishart distribution
+     """
+     if nu < len(V) + 1:
+-        raise ValueError, "dof parameter nu must larger than len(V)"
++        raise ValueError("dof parameter nu must larger than len(V)")
+ 
+     D = len(V)
+     E = D*np.log(2.0) - np.log(det(V)) + \
+@@ -78,14 +78,13 @@
+     KL-div of Wishart distribution KL[q(nu1,V1)||p(nu2,V2)]
+     """
+     if nu1 < len(V1) + 1:
+-        raise ValueError, "dof parameter nu1 must larger than len(V1)"
++        raise ValueError("dof parameter nu1 must larger than len(V1)")
+ 
+     if nu2 < len(V2) + 1:
+-        raise ValueError, "dof parameter nu2 must larger than len(V2)"
++        raise ValueError("dof parameter nu2 must larger than len(V2)")
+ 
+     if len(V1) != len(V2):
+-        raise ValueError, \
+-            "dimension of two matrix dont match, %d and %d"%(len(V1),len(V2))
++        raise ValueError("dimension of two matrix dont match, %d and %d"%(len(V1),len(V2)))
+ 
+     D = len(V1)
+     KL = 0.5 * ( (nu1 -nu2) * E_lndetW_Wishart(nu1,V1) \
+@@ -93,8 +92,8 @@
+         - lnZ_Wishart(nu1,V1) + lnZ_Wishart(nu2,V2)
+ 
+     if KL < _small_negative_number :
+-        print nu1,nu2,V1,V2
+-        raise ValueError, "KL must be larger than 0"
++        print(nu1,nu2,V1,V2)
++        raise ValueError("KL must be larger than 0")
+ 
+     return KL
+ 
+@@ -103,8 +102,7 @@
+     KL-div of Gauss-Wishart distr KL[q(nu1,V1,beta1,m1)||p(nu2,V2,beta2,m2)
+     """
+     if len(m1) != len(m2):
+-        raise ValueError,  \
+-            "dimension of two mean dont match, %d and %d"%(len(m1),len(m2))
++        raise ValueError("dimension of two mean dont match, %d and %d"%(len(m1),len(m2)))
+ 
+     D = len(m1)
+ 
+@@ -118,7 +116,7 @@
+     KL = KL1 + KL2
+ 
+     if KL < _small_negative_number :
+-        raise ValueError, "KL must be larger than 0"
++        raise ValueError("KL must be larger than 0")
+ 
+     return KL
+ 
+@@ -139,13 +137,13 @@
+ 
+ def KL_StickBrake(tau1,tau2):
+     if len(tau1) != len(tau2):
+-        raise ValueError, "number of compenents didn't match"
++        raise ValueError("number of compenents didn't match")
+ 
+     nmix = len(tau1)
+ 
+-    KL = np.sum([KL_Dirichlet(tau1[k],tau2[k]) for k in xrange(nmix)])
++    KL = np.sum([KL_Dirichlet(tau1[k],tau2[k]) for k in range(nmix)])
+ 
+     if KL < _small_negative_number :
+-        raise ValueError, "KL must be larger than 0"
++        raise ValueError("KL must be larger than 0")
+     
+     return KL
+--- PyVB/pyvb/sampling.py	(original)
++++ PyVB/pyvb/sampling.py	(refactored)
+@@ -16,7 +16,7 @@
+     nmix,dim = m.shape
+     pi2 = pi / np.sum(pi)
+     x = []
+-    for k in xrange(nmix):
++    for k in range(nmix):
+         nk = int(pi2[k] * n)
+         x.append(sample_gaussian(m[k],cv[k],nk))
+     return np.concatenate(x)
+--- PyVB/pyvb/util.py	(original)
++++ PyVB/pyvb/util.py	(refactored)
+@@ -58,7 +58,7 @@
+     nobs, ndim = obs.shape
+     nmix = len(mu)
+     lnf = np.empty((nobs, nmix))
+-    for k in xrange(nmix):
++    for k in range(nmix):
+         dln2pi = ndim * np.log(2.0 * np.pi)
+         lndetV = np.log(det(cv[k]))
+         q = _sym_quad_form(obs,mu[k],cv[k])
+@@ -74,7 +74,7 @@
+     nobs, ndim = obs.shape
+     nmix = len(m)
+     lnf = np.empty((nobs, nmix))
+-    for k in xrange(nmix):
++    for k in range(nmix):
+         dln2pi = ndim * np.log(2.0 * np.pi)
+         lndetV = - E_lndetW_Wishart(nu[k],V[k])
+         cv = V[k] / nu[k]
+@@ -171,8 +171,8 @@
+     pylab.fill(np.array([0,width,width,0]),np.array([0,0,height,height]),'gray')
+     pylab.axis('off')
+     pylab.axis('equal')
+-    for x in xrange(width):
+-        for y in xrange(height):
++    for x in range(width):
++        for y in range(height):
+             _x = x+1
+             _y = y+1
+             w = W[y,x]
+--- PyVB/pyvb/vbgmm.py	(original)
++++ PyVB/pyvb/vbgmm.py	(refactored)
+@@ -153,7 +153,7 @@
+         KL = KL_Dirichlet(self._u,self._u0)
+ 
+         # then calculate KL-div of mean vectors and precision matrices
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             KL += KL_GaussWishart(self._nu[k],self._V[k],self._beta[k],\
+                 self._m[k],self._nu0,self._V0,self._beta0,self._m0)
+ 
+@@ -191,7 +191,7 @@
+         self._nu = self._nu0 + self._N
+         self._beta = self._beta0 + self._N
+         # vector or matrix parameters of Gauss-Wishart
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             self._m[k] = (self._beta0 * self._m0  \
+                 + self._N[k] * self._xbar[k]) / self._beta[k]
+             dx = self._xbar[k] - self._m0
+--- PyVB/pyvb/vbhmm.py	(original)
++++ PyVB/pyvb/vbhmm.py	(refactored)
+@@ -49,7 +49,7 @@
+             old_F = 1.0e20
+             lnalpha, lnbeta, lneta = self._allocate_temp(obs)
+             
+-        for i in xrange(niter):
++        for i in range(niter):
+             # VB-E step
+             lnf = self._log_like_f(obs)
+             lneta,lngamma, lnP = self._E_step(lnf,lnalpha,lnbeta,lneta,use_ext)
+@@ -59,13 +59,13 @@
+             F = -lnP + KL
+             dF = F - old_F
+             if(abs(dF) < eps):
+-                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF)
+-                print "%12.6e < %12.6e Converged" %(dF, eps)
++                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF))
++                print("%12.6e < %12.6e Converged" %(dF, eps))
+                 break
+             if i % ifreq == 0 and dF < 0.0:
+-                print "%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF)
++                print("%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF))
+             elif dF >= 0.0:
+-                print "%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF)
++                print("%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF))
+         
+             old_F = F
+ 
+@@ -89,7 +89,7 @@
+         # i.e. obss[i] = obs[pos_ids[i][0]:pos_ids[i][1]]
+         pos_ids = [] 
+         j = 0
+-        for i in xrange(nobss):
++        for i in range(nobss):
+             pos_ids.append((j,j+nobs[i]))
+             j += nobs[i]
+     
+@@ -100,15 +100,15 @@
+         # allocate space for forward-backward
+         lneta = []
+         lngamma = []
+-        for nn in xrange(nobss):
++        for nn in range(nobss):
+             lneta.append(np.zeros((len(obss[nn])-1,nmix,nmix)))
+             lngamma.append(np.zeros((len(obss[nn]),nmix)))
+         lnalpha, lnbeta, lneta_temp = self._allocate_temp(obss[i_max_obs])
+     
+-        for i in xrange(niter):
++        for i in range(niter):
+             lnP = 0.0
+             lnf = self._log_like_f(obs_flatten)
+-            for nn in xrange(nobss):
++            for nn in range(nobss):
+                 Ti,Tf = pos_ids[nn]
+                 e, g, p = self._E_step(lnf[Ti:Tf],lnalpha[:nobs[nn]],\
+                     lnbeta[:nobs[nn]],lneta_temp[:nobs[nn]-1],use_ext)
+@@ -121,14 +121,14 @@
+             F = -lnP + KL
+             dF = F - old_F
+             if(abs(dF) < eps):
+-                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF)
+-                print "%12.6e < %12.6e Converged" %(dF, eps)
++                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF))
++                print("%12.6e < %12.6e Converged" %(dF, eps))
+                 break
+ 
+             if i % ifreq == 0 and dF < 0.0:
+-                print "%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF)
++                print("%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF))
+             elif dF >= 0.0:
+-                print "%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF)
++                print("%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF))
+ 
+             old_F = F
+             self._M_step(obs_flatten,np.vstack(lneta),lngamma,multi=True)
+@@ -142,7 +142,7 @@
+         nmix = self._nstates
+         KLPi = KL_Dirichlet(self._WPi,self._uPi)
+         KLA = 0
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             KLA += KL_Dirichlet(self._WA[k],self._uA[k])
+         return KLPi + KLA
+ 
+@@ -168,7 +168,7 @@
+         # update parameters of transition prob 
+         self._WA = self._uA + np.exp(lneta).sum(0)
+         self._lnA = digamma(self._WA) - digamma(self._WA)
+-        for k in xrange(self._nstates):
++        for k in range(self._nstates):
+             self._lnA[k,:] = E_lnpi_Dirichlet(self._WA[k,:])
+         
+     def getExpectations(self):
+@@ -207,7 +207,7 @@
+ 
+     def _update_parameters(self,obs,lneta,lngamma):
+         _BaseVBHMM._update_parameters(self,obs,lneta,lngamma)
+-        for j in xrange(self._mstates):
++        for j in range(self._mstates):
+             self._WB[:,j] = self._uB[:,j] + self.z[obs==j,:].sum(0)
+             self._lnB[:,j] = digamma(self._WB[:,j]) \
+                     - digamma(self._WB[:,j].sum())
+@@ -258,7 +258,7 @@
+                 self,obs,lneta,lngamma,multi)
+         self._N = self.z.sum(0)
+         self._xbar = np.dot(self.z.T,obs) / self._N[:,np.newaxis]
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             dobs = obs - self._xbar[k]
+             self._C[k] = np.dot((self.z[:,k]*dobs.T),dobs)
+         
+@@ -270,7 +270,7 @@
+         self._beta = self._beta0 + self._N
+         self._nu = self._nu0 + self._N
+         self._V = self._V0 + self._C
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             self._m[k] = (self._beta0 * self._m0 + self._N[k] * self._xbar[k])\
+                         / self._beta[k]
+             dx = self._xbar[k] - self._m0
+@@ -280,7 +280,7 @@
+     def _KL_div(self):
+         nmix = self._nstates
+         KL = _BaseVBHMM._KL_div(self)
+-        for k in xrange(nmix):
++        for k in range(nmix):
+             KLg = KL_GaussWishart(self._nu[k],self._V[k],self._beta[k],\
+                 self._m[k],self._nu0,self._V0,self._beta0,self._m0)
+             KL += KLg
+@@ -307,12 +307,12 @@
+         cv = self.cv[ids]
+         for k in range(len(ids)):
+             i = ids[k]
+-            print "\n%dth component, pi = %8.3g" % (k,self.pi[i])
+-            print "cluster id =", i
++            print("\n%dth component, pi = %8.3g" % (k,self.pi[i]))
++            print("cluster id =", i)
+             if show_mu:
+-                print "mu =",self.mu[i]
++                print("mu =",self.mu[i])
+             if show_cv:
+-                print "cv =",self.cv[i]      
++                print("cv =",self.cv[i])      
+         return ids,pi,A,mu,cv
+ 
+     def getClustPos(self,obs,use_ext=default_ext,multi=False,eps=1.0e-2):
+@@ -337,7 +337,7 @@
+         try :
+             import matplotlib.pyplot as plt
+         except ImportError :
+-            print "cannot import pyplot"
++            print("cannot import pyplot")
+             return
+         for k,pos in enumerate(clust_pos):
+             symb = symbs[k / 6]
+@@ -358,7 +358,7 @@
+         try :
+             import matplotlib.pyplot as plt
+         except ImportError :
+-            print "cannot import pyplot"
++            print("cannot import pyplot")
+             return
+         for k,pos in enumerate(clust_pos):
+             symb = symbs[k / 6]
+--- PyVB/pyvb/old_ver/vbgmm.py	(original)
++++ PyVB/pyvb/old_ver/vbgmm.py	(refactored)
+@@ -12,8 +12,8 @@
+   ext_imported = True
+ except:
+   ext_imported = False
+-  print "warning, Cython extension module was not found"
+-  print "computation can be slower"
++  print("warning, Cython extension module was not found")
++  print("computation can be slower")
+ 
+ class VBGMM:
+   def __init__(self,nmix=10,u=0.5,m=0.0,beta=1,nu=1,s=10.0):
+@@ -87,7 +87,7 @@
+     nmix = self._nstates
+     self.N = self.z.sum(0)
+     self.xbar = np.dot(self.z.T,obs) 
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       self.xbar[k] /= self.N[k]
+       dobs = obs - self.xbar[k]
+       self.C[k] = np.dot((self.z[:,k]*dobs.T),dobs)
+@@ -98,7 +98,7 @@
+     self.beta = self.N + self._beta0
+     self.nu = self._nu0 + self.N
+     self.s = self._s0 + self.C
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       self.m[k] = (self._beta0 * self._m0 + self.N[k] * self.xbar[k])\
+           / self.beta[k]
+       dx = self.xbar[k] - self._m0
+@@ -107,7 +107,7 @@
+   def _KL_div(self):
+     nmix = self._nstates
+     KL = KL_Dirichlet(self.u,self._u0)
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       KL += KL_GaussWishart(self.nu[k],self.s[k],self.beta[k],self.m[k],\
+           self._nu0,self._s0,self._beta0,self._m0)
+     return KL
+@@ -126,15 +126,15 @@
+       F_new = -lnP + self._KL_div()
+       dF = F_new - F_old
+       if abs(dF) < eps :
+-        print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF)
+-        print "%12.6e < %12.6e Converged" %(dF, eps)
++        print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF))
++        print("%12.6e < %12.6e Converged" %(dF, eps))
+         break
+       if i % ifreq == 0:
+         if dF < 0.0:
+-          print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF)
++          print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF))
+         else :
+-          print "%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
+-              %(i,F_new,dF)
++          print("%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
++              %(i,F_new,dF))
+       F_old = F_new
+       self._VBM(obs)
+     if plot:
+@@ -143,20 +143,20 @@
+ 
+   def showModel(self,show_m=False,show_s=False,min_pi=0.01):
+     nmix = self._nstates
+-    params = sorted(zip(self._epi,range(nmix),self.m,self._et),\
++    params = sorted(zip(self._epi,list(range(nmix)),self.m,self._et),\
+         key=lambda x:x[0],reverse=True)
+     relavent_clusters = []
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       if params[k][0] < min_pi:
+         break
+       relavent_clusters.append(params[k])
+-      print "\n%dth component, pi = %8.3g" \
+-          % (k,params[k][0])
+-      print "cluster id =", params[k][1]
++      print("\n%dth component, pi = %8.3g" \
++          % (k,params[k][0]))
++      print("cluster id =", params[k][1])
+       if show_m:
+-        print "mu =",params[k][2]
++        print("mu =",params[k][2])
+       if show_s:
+-        print "tau =",params[k][3]
++        print("tau =",params[k][3])
+     return relavent_clusters
+ 
+   def pdf(self,x,min_pi=0.01):
+@@ -185,7 +185,7 @@
+     try :
+       import matplotlib.pyplot as plt
+     except ImportError :
+-      print "cannot import pyplot"
++      print("cannot import pyplot")
+       return
+     for k,pos in enumerate(clust_pos):
+       symb = symbs[k / 7]
+@@ -200,7 +200,7 @@
+     try :
+       import matplotlib.pyplot as plt
+     except ImportError :
+-      print "cannot import pyplot"
++      print("cannot import pyplot")
+       return
+     for k,pos in enumerate(clust_pos):
+       symb = symbs[k / 7]
+@@ -216,7 +216,7 @@
+       import matplotlib.pyplot as plt
+       from mpl_toolkits.mplot3d import Axes3D
+     except ImportError :
+-      print "cannot import pyplot"
++      print("cannot import pyplot")
+       return
+     fig = plt.figure()
+     axis = Axes3D(fig)
+@@ -231,14 +231,14 @@
+     codes = z.argmax(1)
+     dim = self._nstates
+     MT = np.zeros((dim,dim))
+-    for t in xrange(1,len(z)-1):
++    for t in range(1,len(z)-1):
+       #MT[codes[t],codes[t+1]] += 1
+       MT += np.outer(z[t-1],z[t])
+       #for i in xrange(dim):
+       #  for j in xrange(dim):
+       #    MT[i,j] += z[t-1,i] * z[t,j]
+-    for i in xrange(len(MT)):
+-      for j in xrange(len(MT)):
++    for i in range(len(MT)):
++      for j in range(len(MT)):
+         if MT[i,j] < min_degree:
+           MT[i,j] = 0.0
+ 
+--- PyVB/pyvb/old_ver/vbgmm1d.py	(original)
++++ PyVB/pyvb/old_ver/vbgmm1d.py	(refactored)
+@@ -11,8 +11,8 @@
+   ext_imported = True
+ except:
+   ext_imported = False
+-  print "warning, Cython extension module was not found"
+-  print "computation can be slower"
++  print("warning, Cython extension module was not found")
++  print("computation can be slower")
+ 
+ def testData1(n=100):
+   X = np.r_[randn(n*2)]
+@@ -71,7 +71,7 @@
+     if use_ext and ext_imported :
+       pass
+     else :
+-      for k in xrange(nmix):
++      for k in range(nmix):
+         # very slow! need Fortran or C codes
+         dobs = obs - self.m[k]
+         z[:,k] -= 0.5 * (1.0/self.beta[k] + self.nu[k]*self.s[k]*(dobs**2))
+@@ -107,7 +107,7 @@
+     # <lnp(X|Z,theta)>
+     # very slow! neew Fortran or C codes
+     lnpX = np.dot(self.N,(np.log(self.pi) + 0.5 * self._elnt))
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       dobs = obs - self.m[k]
+       lnpX -= self.N[k] * 1.0 / self.beta[k] + self.s[k] * self.nu[k] * \
+           (dobs * dobs).sum()
+@@ -132,7 +132,7 @@
+     # Wishart part
+     KLmt = (self.N * self._elnt + self.nu * (self.s / self._s0 - 1.0)).sum() \
+         * 0.5 + nmix * lnZ_Wishart(self._nu0,self._s0)
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       KLmt  -= lnZ_Wishart(self.nu[k],self.s[k])
+     
+     # Conditional Gaussian part
+@@ -151,14 +151,14 @@
+ 
+     # KL[q(z)||p(z)] 
+     KLz = 0.0
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       KLz -= np.dot(self.z[:,k],np.log(self.z[:,k]))
+       KLz += np.dot(self.N,np.log(self.pi))
+ 
+     # KL[q(mu,tau)||p(mu,tau)]
+     KLmt = (np.log(self.beta).sum() - nmix * self._beta0) * 0.5
+     KLmt += lnZ_Wishart(self._nu0,self._s0) * nmix
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       KLmt  -= lnZ_Wishart(self.nu[k],self.s[k])
+ 
+     #print "%12.5e %12.5e %12.5e"%(Hz,-KLpi,-KLmt)
+@@ -179,12 +179,12 @@
+       F_new = self._VBFreeEnergy(obs,use_ext)
+       dF = F_new - F_old
+       if dF < 0.0:
+-        print "%8dth iter, Free Energy = %10.4e, dF = %10.4e" %(i,F_new,dF)
++        print("%8dth iter, Free Energy = %10.4e, dF = %10.4e" %(i,F_new,dF))
+       else :
+-        print "%8dth iter, Free Energy = %10.4e, dF = %10.4e warning" \
+-            %(i,F_new,dF)
++        print("%8dth iter, Free Energy = %10.4e, dF = %10.4e warning" \
++            %(i,F_new,dF))
+       if abs(dF) < eps :
+-        print dF, " < ", eps, "Converged"
++        print(dF, " < ", eps, "Converged")
+         break
+       #conv_u = np.allclose(self.pi,old_pi)
+       #conv_m = np.allclose(self.m,old_m)
+@@ -200,12 +200,12 @@
+     nmix = self._nstates
+     params = sorted(zip(self.pi,self.m,self._et),reverse=True)
+     relavent_clusters = []
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       if params[k][0] < min_pi:
+         break
+       relavent_clusters.append(params[k])
+-      print "%dth component, pi = %8.3g, mu = %8.3g, tau = %8.3g" \
+-          % (k+1,params[k][0],params[k][1],params[k][2])
++      print("%dth component, pi = %8.3g, mu = %8.3g, tau = %8.3g" \
++          % (k+1,params[k][0],params[k][1],params[k][2]))
+     return relavent_clusters
+ 
+   def pdf(self,x,min_pi=0.01):
+@@ -220,7 +220,7 @@
+     try :
+       import matplotlib.pyplot as plt
+     except ImportError :
+-      print "cannot import pyplot"
++      print("cannot import pyplot")
+       return
+     x = np.linspace(min(obs),max(obs),bins)
+     y = self.pdf(x,min_pi)
+--- PyVB/pyvb/old_ver/vbgmm1d2.py	(original)
++++ PyVB/pyvb/old_ver/vbgmm1d2.py	(refactored)
+@@ -79,7 +79,7 @@
+     if use_ext and ext_imported :
+       pass
+     else :
+-      for k in xrange(nmix):
++      for k in range(nmix):
+         # very slow! need Fortran or C codes
+         dobs = obs - self.m[k]
+         z[:,k] -= 0.5 * (1.0/self.beta[k] + self.nu[k]*self.s[k]*(dobs**2))
+@@ -113,14 +113,14 @@
+     # <lnp(X|Z,theta)>
+     # very slow! neew Fortran or C codes
+     lnpX = np.dot(self.N,(self._elnpi + 0.5 * self._elnt))
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       dobs = obs - self.m[k]
+       lnpX -= self.N[k] * 1.0 / self.beta[k] + self.s[k] * self.nu[k] * \
+           (dobs**2).sum()
+ 
+     # H[q(z)] = -<lnq(z)>
+     Hz = 0.0
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       Hz -= np.dot(self.z[:,k],np.log(self.z[:,k]))
+ 
+     # KL[q(pi)||p(pi)]
+@@ -135,7 +135,7 @@
+     # Wishart part
+     KLmt = (self.N * self._elnt + self.nu * (self.s / self._s0 - 1.0)).sum() \
+         * 0.5 + nmix * lnZ_Wishart(self._nu0,self._s0)
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       KLmt  -= lnZ_Wishart(self.nu[k],self.s[k])
+     
+     # Conditional Gaussian part
+@@ -154,7 +154,7 @@
+ 
+     # H[q(z)] = -<lnq(z)>
+     Hz = 0.0
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       Hz -= np.dot(self.z[:,k],np.log(self.z[:,k]))
+ 
+     # KL[q(pi)||p(pi)]
+@@ -164,7 +164,7 @@
+     # KL[q(mu,tau)||p(mu,tau)]
+     KLmt = (np.log(self.beta).sum() - nmix * self._beta0) * 0.5
+     KLmt += lnZ_Wishart(self._nu0,self._s0) * nmix
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       KLmt  -= lnZ_Wishart(self.nu[k],self.s[k])
+ 
+     #print "%12.5e %12.5e %12.5e"%(Hz,-KLpi,-KLmt)
+@@ -186,15 +186,15 @@
+       F_new = self._VBFreeEnergy(obs,use_ext)
+       dF = F_new - F_old
+       if abs(dF) < eps :
+-        print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF)
+-        print "%12.6e < %12.6e Converged" %(dF, eps)
++        print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF))
++        print("%12.6e < %12.6e Converged" %(dF, eps))
+         break
+       if i % ifreq == 0:
+         if dF < 0.0:
+-          print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF)
++          print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF))
+         else :
+-          print "%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
+-              %(i,F_new,dF)
++          print("%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
++              %(i,F_new,dF))
+       #conv_u = np.allclose(self.u,old_u)
+       #conv_m = np.allclose(self.m,old_m)
+       #conv_s = np.allclose(self.s,old_s)
+@@ -209,12 +209,12 @@
+     nmix = self._nstates
+     params = sorted(zip(self._epi,self.m,self._et),reverse=True)
+     relavent_clusters = []
+-    for k in xrange(nmix):
++    for k in range(nmix):
+       if params[k][0] < min_pi:
+         break
+       relavent_clusters.append(params[k])
+-      print "%dth component, pi = %8.3g, mu = %8.3g, tau = %8.3g" \
+-          % (k+1,params[k][0],params[k][1],params[k][2])
++      print("%dth component, pi = %8.3g, mu = %8.3g, tau = %8.3g" \
++          % (k+1,params[k][0],params[k][1],params[k][2]))
+     return relavent_clusters
+ 
+   def pdf(self,x,min_pi=0.01):
+@@ -229,7 +229,7 @@
+     try :
+       import matplotlib.pyplot as plt
+     except ImportError :
+-      print "cannot import pyplot"
++      print("cannot import pyplot")
+       return
+     x = np.linspace(min(obs),max(obs),bins)
+     y = self.pdf(x,min_pi)

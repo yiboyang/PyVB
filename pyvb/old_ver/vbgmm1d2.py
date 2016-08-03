@@ -79,7 +79,7 @@ class VBGMM1D:
     if use_ext and ext_imported :
       pass
     else :
-      for k in xrange(nmix):
+      for k in range(nmix):
         # very slow! need Fortran or C codes
         dobs = obs - self.m[k]
         z[:,k] -= 0.5 * (1.0/self.beta[k] + self.nu[k]*self.s[k]*(dobs**2))
@@ -113,14 +113,14 @@ class VBGMM1D:
     # <lnp(X|Z,theta)>
     # very slow! neew Fortran or C codes
     lnpX = np.dot(self.N,(self._elnpi + 0.5 * self._elnt))
-    for k in xrange(nmix):
+    for k in range(nmix):
       dobs = obs - self.m[k]
       lnpX -= self.N[k] * 1.0 / self.beta[k] + self.s[k] * self.nu[k] * \
           (dobs**2).sum()
 
     # H[q(z)] = -<lnq(z)>
     Hz = 0.0
-    for k in xrange(nmix):
+    for k in range(nmix):
       Hz -= np.dot(self.z[:,k],np.log(self.z[:,k]))
 
     # KL[q(pi)||p(pi)]
@@ -135,7 +135,7 @@ class VBGMM1D:
     # Wishart part
     KLmt = (self.N * self._elnt + self.nu * (self.s / self._s0 - 1.0)).sum() \
         * 0.5 + nmix * lnZ_Wishart(self._nu0,self._s0)
-    for k in xrange(nmix):
+    for k in range(nmix):
       KLmt  -= lnZ_Wishart(self.nu[k],self.s[k])
     
     # Conditional Gaussian part
@@ -154,7 +154,7 @@ class VBGMM1D:
 
     # H[q(z)] = -<lnq(z)>
     Hz = 0.0
-    for k in xrange(nmix):
+    for k in range(nmix):
       Hz -= np.dot(self.z[:,k],np.log(self.z[:,k]))
 
     # KL[q(pi)||p(pi)]
@@ -164,7 +164,7 @@ class VBGMM1D:
     # KL[q(mu,tau)||p(mu,tau)]
     KLmt = (np.log(self.beta).sum() - nmix * self._beta0) * 0.5
     KLmt += lnZ_Wishart(self._nu0,self._s0) * nmix
-    for k in xrange(nmix):
+    for k in range(nmix):
       KLmt  -= lnZ_Wishart(self.nu[k],self.s[k])
 
     #print "%12.5e %12.5e %12.5e"%(Hz,-KLpi,-KLmt)
@@ -186,15 +186,15 @@ class VBGMM1D:
       F_new = self._VBFreeEnergy(obs,use_ext)
       dF = F_new - F_old
       if abs(dF) < eps :
-        print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF)
-        print "%12.6e < %12.6e Converged" %(dF, eps)
+        print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF))
+        print("%12.6e < %12.6e Converged" %(dF, eps))
         break
       if i % ifreq == 0:
         if dF < 0.0:
-          print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF)
+          print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF))
         else :
-          print "%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
-              %(i,F_new,dF)
+          print("%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
+              %(i,F_new,dF))
       #conv_u = np.allclose(self.u,old_u)
       #conv_m = np.allclose(self.m,old_m)
       #conv_s = np.allclose(self.s,old_s)
@@ -209,12 +209,12 @@ class VBGMM1D:
     nmix = self._nstates
     params = sorted(zip(self._epi,self.m,self._et),reverse=True)
     relavent_clusters = []
-    for k in xrange(nmix):
+    for k in range(nmix):
       if params[k][0] < min_pi:
         break
       relavent_clusters.append(params[k])
-      print "%dth component, pi = %8.3g, mu = %8.3g, tau = %8.3g" \
-          % (k+1,params[k][0],params[k][1],params[k][2])
+      print("%dth component, pi = %8.3g, mu = %8.3g, tau = %8.3g" \
+          % (k+1,params[k][0],params[k][1],params[k][2]))
     return relavent_clusters
 
   def pdf(self,x,min_pi=0.01):
@@ -229,7 +229,7 @@ class VBGMM1D:
     try :
       import matplotlib.pyplot as plt
     except ImportError :
-      print "cannot import pyplot"
+      print("cannot import pyplot")
       return
     x = np.linspace(min(obs),max(obs),bins)
     y = self.pdf(x,min_pi)

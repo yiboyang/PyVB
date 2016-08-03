@@ -58,7 +58,7 @@ def log_like_Gauss(obs, mu, cv):
     nobs, ndim = obs.shape
     nmix = len(mu)
     lnf = np.empty((nobs, nmix))
-    for k in range(nmix):
+    for k in xrange(nmix):
         dln2pi = ndim * np.log(2.0 * np.pi)
         lndetV = np.log(det(cv[k]))
         q = _sym_quad_form(obs,mu[k],cv[k])
@@ -74,7 +74,7 @@ def log_like_Gauss2(obs,nu,V,beta,m):
     nobs, ndim = obs.shape
     nmix = len(m)
     lnf = np.empty((nobs, nmix))
-    for k in range(nmix):
+    for k in xrange(nmix):
         dln2pi = ndim * np.log(2.0 * np.pi)
         lndetV = - E_lndetW_Wishart(nu[k],V[k])
         cv = V[k] / nu[k]
@@ -171,8 +171,8 @@ def hinton(W, maxWeight=None):
     pylab.fill(np.array([0,width,width,0]),np.array([0,0,height,height]),'gray')
     pylab.axis('off')
     pylab.axis('equal')
-    for x in range(width):
-        for y in range(height):
+    for x in xrange(width):
+        for y in xrange(height):
             _x = x+1
             _y = y+1
             w = W[y,x]

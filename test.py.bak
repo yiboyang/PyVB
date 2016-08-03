@@ -8,7 +8,7 @@ def test_EMGMM(N=5,**keywards):
     model = EMGMM(N)
     model.fit(X)
     model.showModel()
-    print(model.score(X))
+    print model.score(X)
 
 def test_VBGMM(N=5,**keywards):
     from pyvb.vbgmm import VBGMM
@@ -103,10 +103,10 @@ def test_moments(**keywards):
     V2 = np.identity(2) * 3.0
     beta1 = 3
     beta2 = 4
-    print(E_lnpi_Dirichlet(alpha1))
-    print(KL_Dirichlet(alpha1,alpha2))
-    print(E_lndetW_Wishart(nu1,V1))
-    print(KL_GaussWishart(nu1,V1,beta1,m1,nu2,V2,beta2,m2))
+    print E_lnpi_Dirichlet(alpha1)
+    print KL_Dirichlet(alpha1,alpha2)
+    print E_lndetW_Wishart(nu1,V1)
+    print KL_GaussWishart(nu1,V1,beta1,m1,nu2,V2,beta2,m2)
 
 tests = {"EMGMM":test_EMGMM,"VBGMM":test_VBGMM,"DPGMM":test_DPGMM,\
     "HMM":test_HMM,"VBHMM":test_VBHMM,"MEHMM":test_MEHMM,"moments":test_moments}

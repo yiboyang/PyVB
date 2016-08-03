@@ -12,8 +12,8 @@ try:
   ext_imported = True
 except:
   ext_imported = False
-  print("warning, Cython extension module was not found")
-  print("computation can be slower")
+  print "warning, Cython extension module was not found"
+  print "computation can be slower"
 
 class VBGMM:
   def __init__(self,nmix=10,u=0.5,m=0.0,beta=1,nu=1,s=10.0):
@@ -87,7 +87,7 @@ class VBGMM:
     nmix = self._nstates
     self.N = self.z.sum(0)
     self.xbar = np.dot(self.z.T,obs) 
-    for k in range(nmix):
+    for k in xrange(nmix):
       self.xbar[k] /= self.N[k]
       dobs = obs - self.xbar[k]
       self.C[k] = np.dot((self.z[:,k]*dobs.T),dobs)
@@ -98,7 +98,7 @@ class VBGMM:
     self.beta = self.N + self._beta0
     self.nu = self._nu0 + self.N
     self.s = self._s0 + self.C
-    for k in range(nmix):
+    for k in xrange(nmix):
       self.m[k] = (self._beta0 * self._m0 + self.N[k] * self.xbar[k])\
           / self.beta[k]
       dx = self.xbar[k] - self._m0
@@ -107,7 +107,7 @@ class VBGMM:
   def _KL_div(self):
     nmix = self._nstates
     KL = KL_Dirichlet(self.u,self._u0)
-    for k in range(nmix):
+    for k in xrange(nmix):
       KL += KL_GaussWishart(self.nu[k],self.s[k],self.beta[k],self.m[k],\
           self._nu0,self._s0,self._beta0,self._m0)
     return KL
@@ -126,15 +126,15 @@ class VBGMM:
       F_new = -lnP + self._KL_div()
       dF = F_new - F_old
       if abs(dF) < eps :
-        print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF))
-        print("%12.6e < %12.6e Converged" %(dF, eps))
+        print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF)
+        print "%12.6e < %12.6e Converged" %(dF, eps)
         break
       if i % ifreq == 0:
         if dF < 0.0:
-          print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF))
+          print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F_new,dF)
         else :
-          print("%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
-              %(i,F_new,dF))
+          print "%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
+              %(i,F_new,dF)
       F_old = F_new
       self._VBM(obs)
     if plot:
@@ -143,20 +143,20 @@ class VBGMM:
 
   def showModel(self,show_m=False,show_s=False,min_pi=0.01):
     nmix = self._nstates
-    params = sorted(zip(self._epi,list(range(nmix)),self.m,self._et),\
+    params = sorted(zip(self._epi,range(nmix),self.m,self._et),\
         key=lambda x:x[0],reverse=True)
     relavent_clusters = []
-    for k in range(nmix):
+    for k in xrange(nmix):
       if params[k][0] < min_pi:
         break
       relavent_clusters.append(params[k])
-      print("\n%dth component, pi = %8.3g" \
-          % (k,params[k][0]))
-      print("cluster id =", params[k][1])
+      print "\n%dth component, pi = %8.3g" \
+          % (k,params[k][0])
+      print "cluster id =", params[k][1]
       if show_m:
-        print("mu =",params[k][2])
+        print "mu =",params[k][2]
       if show_s:
-        print("tau =",params[k][3])
+        print "tau =",params[k][3]
     return relavent_clusters
 
   def pdf(self,x,min_pi=0.01):
@@ -185,7 +185,7 @@ class VBGMM:
     try :
       import matplotlib.pyplot as plt
     except ImportError :
-      print("cannot import pyplot")
+      print "cannot import pyplot"
       return
     for k,pos in enumerate(clust_pos):
       symb = symbs[k / 7]
@@ -200,7 +200,7 @@ class VBGMM:
     try :
       import matplotlib.pyplot as plt
     except ImportError :
-      print("cannot import pyplot")
+      print "cannot import pyplot"
       return
     for k,pos in enumerate(clust_pos):
       symb = symbs[k / 7]
@@ -216,7 +216,7 @@ class VBGMM:
       import matplotlib.pyplot as plt
       from mpl_toolkits.mplot3d import Axes3D
     except ImportError :
-      print("cannot import pyplot")
+      print "cannot import pyplot"
       return
     fig = plt.figure()
     axis = Axes3D(fig)
@@ -231,14 +231,14 @@ class VBGMM:
     codes = z.argmax(1)
     dim = self._nstates
     MT = np.zeros((dim,dim))
-    for t in range(1,len(z)-1):
+    for t in xrange(1,len(z)-1):
       #MT[codes[t],codes[t+1]] += 1
       MT += np.outer(z[t-1],z[t])
       #for i in xrange(dim):
       #  for j in xrange(dim):
       #    MT[i,j] += z[t-1,i] * z[t,j]
-    for i in range(len(MT)):
-      for j in range(len(MT)):
+    for i in xrange(len(MT)):
+      for j in xrange(len(MT)):
         if MT[i,j] < min_degree:
           MT[i,j] = 0.0
 

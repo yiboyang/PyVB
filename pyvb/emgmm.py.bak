@@ -76,22 +76,22 @@ class EMGMM:
         nmix = self._nstates
 
         # make a tuple of properties and sort its member by mixing coefficients
-        params = sorted(zip(self.pi,list(range(nmix)),self.mu,self.cv),\
+        params = sorted(zip(self.pi,range(nmix),self.mu,self.cv),\
             key=lambda x:x[0],reverse=True)
 
         relavent_clusters = []
-        for k in range(nmix):
+        for k in xrange(nmix):
             # exclude clusters whose pi < min_pi
             if params[k][0] < min_pi:
                 break
 
             relavent_clusters.append(params[k])
-            print("\n%dth component, pi = %8.3g" % (k,params[k][0]))
-            print("cluster id =", params[k][1])
+            print "\n%dth component, pi = %8.3g" % (k,params[k][0])
+            print "cluster id =", params[k][1]
             if show_mu:
-                print("mu =",params[k][2])
+                print "mu =",params[k][2]
             if show_cv:
-                print("cv =",params[k][3])
+                print "cv =",params[k][3]
 
         return relavent_clusters
 
@@ -168,7 +168,7 @@ class EMGMM:
         F = 1.0e50
 
         # main loop
-        for i in range(niter):
+        for i in xrange(niter):
 
             # performe E step and set new free energy
             F_new = - self._E_step(obs)
@@ -178,18 +178,18 @@ class EMGMM:
 
             # check convergence
             if abs(dF) < eps :
-                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" \
-                %(i,F_new,dF))
-                print("%12.6e < %12.6e Converged" %(dF, eps))
+                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" \
+                %(i,F_new,dF)
+                print "%12.6e < %12.6e Converged" %(dF, eps)
                 break
 
             # print iteration info
             if i % ifreq == 0 and dF < 0.0:
-                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" \
-                %(i,F_new,dF))
+                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" \
+                %(i,F_new,dF)
             elif dF > 0.0:
-                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
-              %(i,F_new,dF))
+                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e warning" \
+              %(i,F_new,dF)
 
             # update free energy
             F = F_new
@@ -235,7 +235,7 @@ class EMGMM:
         # posterior average of x
         self._xbar = np.dot(self.z.T,obs) / self._N[:,np.newaxis]
         # posterior unnormalized sample covariance matrices
-        for k in range(nmix):
+        for k in xrange(nmix):
             dobs = obs - self._xbar[k]
             self._C[k] = np.dot((self.z[:,k] * dobs.T), dobs)
 
@@ -289,7 +289,7 @@ class EMGMM:
         try :
             import matplotlib.pyplot as plt
         except ImportError :
-            print("cannot import pyplot")
+            print "cannot import pyplot"
             return
         # plot data
         for k,pos in enumerate(clust_pos):
@@ -313,7 +313,7 @@ class EMGMM:
         try :
             import matplotlib.pyplot as plt
         except ImportError :
-            print("cannot import pyplot")
+            print "cannot import pyplot"
             return
         for k,pos in enumerate(clust_pos):
             symb = symbs[k / 7]
@@ -342,11 +342,11 @@ class EMGMM:
         MT = np.zeros((dim,dim))
 
         # main loop
-        for t in range(1,len(z)-1):
+        for t in xrange(1,len(z)-1):
             MT += np.outer(z[t-1],z[t])
 
-        for i in range(len(MT)):
-            for j in range(len(MT)):
+        for i in xrange(len(MT)):
+            for j in xrange(len(MT)):
                 if MT[i,j] < min_degree:
                     MT[i,j] = 0.0
 

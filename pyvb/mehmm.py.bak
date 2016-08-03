@@ -53,9 +53,9 @@ class _BaseMEHMM(_BaseVBHMM):
         if init:
             self._initialize_HMM(obs)
             old_F = 1.0e20
-            print(set(self.z))            
+            print set(self.z)            
             
-        for i in range(niter):
+        for i in xrange(niter):
             # VB-E step
             lnf = self._log_like_f(obs)
             self.z, lnP = self._E_step(lnf,use_ext)
@@ -66,13 +66,13 @@ class _BaseMEHMM(_BaseVBHMM):
             dF = F - old_F
     
             if(abs(dF) < eps):
-                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF))
-                print("%12.6e < %12.6e Converged" %(dF, eps))
+                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF)
+                print "%12.6e < %12.6e Converged" %(dF, eps)
                 break
             if i % ifreq == 0 and dF < 0.0:
-                print("%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF))
+                print "%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF)
             elif dF >= 0.0:
-                print("%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF))
+                print "%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF)
         
             old_F = F
 
@@ -177,7 +177,7 @@ class _BaseMEHMM(_BaseVBHMM):
         self._WA = self._uA.copy()
 
         # extract N(z[t]=k,z[t+1]=k')
-        for k in range(self._nstates):
+        for k in xrange(self._nstates):
             
             # the position of z[t+1] s.t. z[t] == k
             mask = np.where(self.z == k)[0] + 1
@@ -193,7 +193,7 @@ class _BaseMEHMM(_BaseVBHMM):
             n_trans = np.bincount(self.z[mask])
             self._WA[k,:len(n_trans)] += n_trans 
                 
-        for k in range(self._nstates):
+        for k in xrange(self._nstates):
             self._lnA[k,:] = E_lnpi_Dirichlet(self._WA[k,:])
         
 #class VBMultinomialHMM(_BaseVBHMM):
@@ -261,7 +261,7 @@ class MEGaussianHMM(_BaseMEHMM):
     def _KL_div(self):
         nmix = self._nstates
         KL = _BaseVBHMM._KL_div(self)
-        for k in range(nmix):
+        for k in xrange(nmix):
             KLg = KL_GaussWishart(self._nu[k],self._V[k],self._beta[k],\
                 self._m[k],self._nu0,self._V0,self._beta0,self._m0)
             KL += KLg
@@ -275,7 +275,7 @@ class MEGaussianHMM(_BaseMEHMM):
         self._N[:] = 0
         self._N[:len(count)] = count[:]
         
-        for k in range(nmix):
+        for k in xrange(nmix):
             mask = (self.z == k)
             
             # ignore empty cluster 
@@ -295,7 +295,7 @@ class MEGaussianHMM(_BaseMEHMM):
         self._beta = self._beta0 + self._N
         self._nu = self._nu0 + self._N
         self._V = self._V0 + self._C
-        for k in range(nmix):
+        for k in xrange(nmix):
             if self._N[k] == 0:
                 self._m[k] = self._m0[:]
                 self._V[k] = self._V0[:]
@@ -327,12 +327,12 @@ class MEGaussianHMM(_BaseMEHMM):
         cv = self.cv[ids]
         for k in range(len(ids)):
             i = ids[k]
-            print("\n%dth component, pi = %8.3g" % (k,self.pi[i]))
-            print("cluster id =", i)
+            print "\n%dth component, pi = %8.3g" % (k,self.pi[i])
+            print "cluster id =", i
             if show_mu:
-                print("mu =",self.mu[i])
+                print "mu =",self.mu[i]
             if show_cv:
-                print("cv =",self.cv[i])      
+                print "cv =",self.cv[i]      
         return ids,pi,A,mu,cv
 
     def getClustPos(self,obs,use_ext=default_ext,multi=False,eps=1.0e-2):
@@ -357,7 +357,7 @@ class MEGaussianHMM(_BaseMEHMM):
         try :
             import matplotlib.pyplot as plt
         except ImportError :
-            print("cannot import pyplot")
+            print "cannot import pyplot"
             return
         for k,pos in enumerate(clust_pos):
             symb = symbs[k / 6]
@@ -378,7 +378,7 @@ class MEGaussianHMM(_BaseMEHMM):
         try :
             import matplotlib.pyplot as plt
         except ImportError :
-            print("cannot import pyplot")
+            print "cannot import pyplot"
             return
         for k,pos in enumerate(clust_pos):
             symb = symbs[k / 6]

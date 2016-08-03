@@ -10,7 +10,7 @@ try:
     from . import _hmmc
     extC_imported = True
 except ImportError:
-    print("C extension module was not imported")
+    print "C extension module was not imported"
     extC_imported = False
 
 # import Fortran95 extension module
@@ -18,7 +18,7 @@ try:
     from . import _hmmf
     extF_imported = True
 except ImportError:
-    print("Fortran extension module was not imported")
+    print "Fortran extension module was not imported"
     extF_imported = False
 
 if extF_imported :
@@ -27,8 +27,8 @@ elif extC_imported :
     default_ext = "C"
 else :
     default_ext = None
-    print("No extension module was not imported")
-    print("Forward-Backward step will be significantly slow")
+    print "No extension module was not imported"
+    print "Forward-Backward step will be significantly slow"
 
 
 class _BaseHMM():
@@ -87,7 +87,7 @@ class _BaseHMM():
             lnalpha = _hmmf.forward_f(self._lnpi,self._lnA,lnf)
         else :
             lnalpha[0,:] = self._lnpi + lnf[0,:]
-            for t in range(1,T):
+            for t in xrange(1,T):
                 lnalpha[t,:] = logsum(lnalpha[t-1,:] + self._lnA.T,1) \
                     + lnf[t,:]
         return lnalpha,logsum(lnalpha[-1,:])
@@ -111,7 +111,7 @@ class _BaseHMM():
             lnbeta = _hmmf.backward_f(self._lnpi,self._lnA,lnf)
         else :
             lnbeta[T-1,:] = 0.0
-            for t in range(T-2,-1,-1):
+            for t in xrange(T-2,-1,-1):
                 lnbeta[t,:] = logsum(self._lnA + lnf[t+1,:] + lnbeta[t+1,:],1)
         return lnbeta,logsum(lnbeta[0,:] + lnf[0,:] + self._lnpi)
 
@@ -186,9 +186,9 @@ class _BaseHMM():
         pi = self.pi[ids]
         A = np.array([AA[ids] for AA in self.A[ids]])
         if show_pi :
-            print("pi = ", pi)
+            print "pi = ", pi
         if show_A :
-            print("A = ", A)
+            print "A = ", A
         return ids,pi,A
 
     def fit(self,obs,niter=1000,eps=1.0e-4,ifreq=10,init=True,\
@@ -206,7 +206,7 @@ class _BaseHMM():
         lnalpha, lnbeta, lneta = self._allocate_temp(obs)
 
         # main loop
-        for i in range(niter):
+        for i in xrange(niter):
             # E step
             lnf = self._log_like_f(obs)
             lneta, lngamma, lnP = \
@@ -215,14 +215,14 @@ class _BaseHMM():
             F = -lnP
             dF = F - old_F
             if(abs(dF) < eps):
-                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e"\
-                     %(i,F,dF))
-                print("%12.6e < %12.6e Converged" %(dF, eps))
+                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e"\
+                     %(i,F,dF)
+                print "%12.6e < %12.6e Converged" %(dF, eps)
                 break
             if i % ifreq == 0 and dF < 0.0:
-                print("%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF))
+                print "%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF)
             elif dF > 0.0:
-                print("%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF))
+                print "%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF)
             old_F = F
             # M step
             self._M_step(obs,lneta,lngamma)
@@ -248,7 +248,7 @@ class _BaseHMM():
         # i.e. obss[i] = obs[pos_ids[i][0]:pos_ids[i][1]]
         pos_ids = []
         j = 0
-        for i in range(nobss):
+        for i in xrange(nobss):
             pos_ids.append((j,j+nobs[i]))
             j += nobs[i]
 
@@ -259,15 +259,15 @@ class _BaseHMM():
         # allocate space for forward-backward
         lneta = []
         lngamma = []
-        for nn in range(nobss):
+        for nn in xrange(nobss):
             lneta.append(np.zeros((len(obss[nn])-1,nmix,nmix)))
             lngamma.append(np.zeros((len(obss[nn]),nmix)))
         lnalpha, lnbeta, lneta_temp = self._allocate_temp(obss[i_max_obs])
 
-        for i in range(niter):
+        for i in xrange(niter):
             lnP = 0.0
             lnf = self._log_like_f(obs_flatten)
-            for nn in range(nobss):
+            for nn in xrange(nobss):
                 Ti,Tf = pos_ids[nn]
                 e, g, p = self._E_step(lnf[Ti:Tf],lnalpha[:nobs[nn]],\
                     lnbeta[:nobs[nn]],lneta_temp[:nobs[nn]-1],use_ext)
@@ -278,13 +278,13 @@ class _BaseHMM():
             F = -lnP
             dF = F - old_F
             if(abs(dF) < eps):
-                print("%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF))
-                print("%12.6e < %12.6e Converged" %(dF, eps))
+                print "%8dth iter, Free Energy = %12.6e, dF = %12.6e" %(i,F,dF)
+                print "%12.6e < %12.6e Converged" %(dF, eps)
                 break
             if i % ifreq == 0 and dF < 0.0:
-                print("%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF))
+                print "%6dth iter, F = %15.8e  df = %15.8e"%(i,F,dF)
             elif dF > 0.0:
-                print("%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF))
+                print "%6dth iter, F = %15.8e  df = %15.8e warning"%(i,F,dF)
             old_F = F
             self._M_step(obs_flatten,lneta,lngamma,multi=True)
         
@@ -303,7 +303,7 @@ class _BaseHMM():
         # check if forward and backward were done correctly
         dlnP = lnP_f-lnP_b
         if abs(dlnP) > 1.0e-6:
-            print("warning forward and backward are not equivalent")
+            print "warning forward and backward are not equivalent"
 
         # compute lneta for updating transition matrix
         if use_ext in ("c","C") and extC_imported :
@@ -312,9 +312,9 @@ class _BaseHMM():
         elif use_ext in ("f","F") and extF_imported :
             lneta = _hmmf.compute_lneta_f(lnalpha,self._lnA,lnbeta,lnf,lnP_f)
         else:
-            for i in range(self._nstates):
-                for j in range(self._nstates):
-                    for t in range(T-1):
+            for i in xrange(self._nstates):
+                for j in xrange(self._nstates):
+                    for t in xrange(T-1):
                         lneta[t,i,j] = lnalpha[t,i] + self._lnA[i,j,] + \
                             lnf[t+1,j] + lnbeta[t+1,j]
             lneta -= lnP_f
@@ -378,7 +378,7 @@ class MultinomialHMM(_BaseHMM):
         r = random((T,2))
         z[0] = (pi_cdf > r[0,0]).argmax()
         o[0] = (B_cdf[z[0]] > r[0,1]).argmax()
-        for t in range(1,T):
+        for t in xrange(1,T):
             z[t] = (A_cdf[z[t-1]] > r[t,0]).argmax()
             o[t] = (B_cdf[z[t]] > r[t,1]).argmax()
 
@@ -386,7 +386,7 @@ class MultinomialHMM(_BaseHMM):
 
     def _update_parameters(self,obs,lneta,lngamma,multi=False):
         lngamma_sum = _BaseHMM._update_parameters(self,obs,lneta,lngamma)
-        for j in range(self._mstates):
+        for j in xrange(self._mstates):
             self._lnB[:,j] = logsum(lngamma[obs==j,:],0) - lngamma_sum
 
 class GaussianHMM(_BaseHMM):
@@ -424,12 +424,12 @@ class GaussianHMM(_BaseHMM):
         
         for k in range(len(ids)):
             i = ids[k]
-            print("\n%dth component, pi = %8.3g" % (k,self.pi[i]))
-            print("cluster id =", i)
+            print "\n%dth component, pi = %8.3g" % (k,self.pi[i])
+            print "cluster id =", i
             if show_mu:
-                print("mu =",self.mu[i])
+                print "mu =",self.mu[i]
             if show_cv:
-                print("cv =",self.cv[i])      
+                print "cv =",self.cv[i]      
         return ids,pi,A,mu,cv
 
     def simulate(self,T):
@@ -441,7 +441,7 @@ class GaussianHMM(_BaseHMM):
         r = random(T)
         z[0] = (pi_cdf > r[0]).argmax()
         o[0] = sample_gaussian(self.mu[z[0]],self.cv[z[0]])
-        for t in range(1,T):
+        for t in xrange(1,T):
             z[t] = (A_cdf[z[t-1]] > r[t]).argmax()
             o[t] = sample_gaussian(self.mu[z[t]],self.cv[z[t]])
         return z,o
@@ -452,7 +452,7 @@ class GaussianHMM(_BaseHMM):
             posteriors = np.exp(np.vstack(lngamma))
         else:
             posteriors = np.exp(lngamma)
-        for k in range(self._nstates):
+        for k in xrange(self._nstates):
             post = posteriors[:, k]
             norm = 1.0 / post.sum()
             self.mu[k] = np.dot(post,obs) * norm
@@ -481,7 +481,7 @@ class GaussianHMM(_BaseHMM):
         try :
             import matplotlib.pyplot as plt
         except ImportError :
-            print("cannot import pyplot")
+            print "cannot import pyplot"
             return
         for k,pos in enumerate(clust_pos):
             symb = symbs[k / 6]
@@ -502,7 +502,7 @@ class GaussianHMM(_BaseHMM):
         try :
             import matplotlib.pyplot as plt
         except ImportError :
-            print("cannot import pyplot")
+            print "cannot import pyplot"
             return
         for k,pos in enumerate(clust_pos):
             symb = symbs[k / 6]

@@ -1,3 +1,3 @@
-from moments import *
-from util import *
-from sampling import *
+from .moments import *
+from .util import *
+from .sampling import *

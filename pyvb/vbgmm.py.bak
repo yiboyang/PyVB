@@ -153,7 +153,7 @@ class VBGMM(EMGMM):
         KL = KL_Dirichlet(self._u,self._u0)
 
         # then calculate KL-div of mean vectors and precision matrices
-        for k in range(nmix):
+        for k in xrange(nmix):
             KL += KL_GaussWishart(self._nu[k],self._V[k],self._beta[k],\
                 self._m[k],self._nu0,self._V0,self._beta0,self._m0)
 
@@ -191,7 +191,7 @@ class VBGMM(EMGMM):
         self._nu = self._nu0 + self._N
         self._beta = self._beta0 + self._N
         # vector or matrix parameters of Gauss-Wishart
-        for k in range(nmix):
+        for k in xrange(nmix):
             self._m[k] = (self._beta0 * self._m0  \
                 + self._N[k] * self._xbar[k]) / self._beta[k]
             dx = self._xbar[k] - self._m0
