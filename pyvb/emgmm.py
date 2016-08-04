@@ -174,10 +174,10 @@ class EMGMM:
         for i in range(niter):
 
             # performe E step and set new free energy
-            F_new = - self._E_step(obs)
+            F_new = self._E_step(obs)
 
             # take difference
-            dF = F_new - F
+            dF = abs(F_new - F)
 
             # check convergence
             if abs(dF) < eps:
@@ -272,6 +272,27 @@ class EMGMM:
         for p in params:
             clust_pos.append(codes == p[1])
         return clust_pos
+
+    def label(self, obs):
+        """
+        Return cluster id (int) per each data point (labels not guaranteed to
+        be continuous
+
+        Parameters
+        ----------
+        obs : N x D ndarray
+
+        Returns
+        -------
+
+        """
+
+        z, lnP = self.eval_hidden_states(obs)
+        # take argmax
+        return z.argmax(1)
+
+
+
 
     def plot1d(self, obs, d1=0, eps=0.01, clust_pos=None):
         """

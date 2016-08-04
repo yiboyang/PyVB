@@ -1,5 +1,5 @@
 import numpy as np
-from pyvb.sampling import testData
+from pyvb.sample_vars import testData
 
 def test_EMGMM(N=5,**keywards):
     from pyvb.emgmm import EMGMM
